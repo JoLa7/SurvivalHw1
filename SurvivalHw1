@@ -1,0 +1,112 @@
+
+%web_drop_table(WORK.IMPORT);
+
+
+FILENAME REFFILE '/home/u59237268/Survival_Analysis/TABLE 3.1-New.xlsx';
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=XLSX
+	OUT=WORK.IMPORT;
+	GETNAMES=YES;
+RUN;
+
+
+data work.import;
+set work.import;
+if monilia = "ND" then monilia = ".";
+else if scan(monilia,1,'x') >= 10 then monilia = 1;
+else monilia = 0;
+run;
+
+
+data work.import;
+set work.import;
+if mumps = "ND" then mumps = ".";
+else if scan(mumps,1,'x') >= 5 then mumps = 1;
+else mumps = 0;
+run;
+
+data work.import;
+set work.import;
+if ppd = "ND" then ppd = ".";
+else if scan(ppd,1,'x') >= 10 then ppd = 1;
+else ppd = 0;
+run;
+
+data work.import;
+set work.import;
+if pha = "ND" then pha = ".";
+else if scan(pha,1,'x') >= 10 then pha = 1;
+else pha = 0;
+run;
+
+data work.import;
+set work.import;
+if sksd = "ND" then sksd = ".";
+else if scan(sksd,1,'x') >= 10 then sksd = 1;
+else sksd = 0;
+run;
+
+data work.import;
+set work.import;
+IF Status = 0 THEN CENSOR =1;
+ELSE CENSOR =0;
+run;
+
+data work.import;
+set work.import;
+CENSOR1 = CENSOR*monilia;
+CENSOR1 = CENSOR*mumps;
+CENSOR1 = CENSOR*ppd;
+CENSOR1 = CENSOR*pha;
+CENSOR1 = CENSOR*sksd;
+run;
+
+proc lifetest data = work.import method=PL intervals=(0 to 900 by 50) plots=(S, LS, LLS, H, P);
+Time Days*STATUS(0);
+strata sex monilia;
+run;
+
+proc lifetest data = work.import method=PL intervals=(0 to 900 by 50) plots=(S, LS, LLS, H, P);
+Time Days*STATUS(0);
+strata sex mumps;
+run;
+
+
+proc lifetest data = work.import method=PL intervals=(0 to 900 by 50) plots=(S, LS, LLS, H, P);
+Time Days*STATUS(0);
+strata sex ppd;
+run;
+
+
+proc lifetest data = work.import method=PL intervals=(0 to 900 by 50) plots=(S, LS, LLS, H, P);
+Time Days*STATUS(0);
+strata sex pha;
+run;
+
+proc lifetest data = work.import method=PL intervals=(0 to 900 by 50) plots=(S, LS, LLS, H, P);
+Time Days*STATUS(0);
+strata sex sksd;
+run;
+
+
+
+proc lifetest data = work.import method=LT intervals=(0 to 900 by 50) plots=(S, LS, LLS, H, P);
+Time Days*CENSOR(1);
+strata sex;
+run;
+
+proc lifetest data = work.import method=LT intervals=(0 to 900 by 50) plots=(S, LS, LLS, H, P);
+Time Days*STATUS(0);
+strata sex monilia;
+run;
+
+proc lifetest data = work.import method = PL intervals=(0 to 900 by 50) plots=(S, LS, LLS, H, P);
+Time Days*CENSOR(1);
+strata monilia sksd ;
+run;
+
+
+proc lifetest data = work.import method=LT intervals=(0 to 900 by 50) plots=(S, LS, LLS, H, P);
+Time Days*CENSOR(1);
+run;
