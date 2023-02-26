@@ -1,0 +1,160 @@
+/* PART 1 EXAM ( Questions 1 -2)*/
+
+
+%web_drop_table(WORK.IMPORT);
+
+
+FILENAME REFFILE '/home/u59237268/Survival_Analysis/Census2019.xlsx';
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=XLSX
+	OUT=WORK.IMPORT;
+	GETNAMES=YES;
+RUN;
+
+PROC CONTENTS DATA=WORK.IMPORT; RUN;
+
+
+%web_open_table(WORK.IMPORT);
+
+
+PROC LIFETEST DATA=WORK.import
+	ALPHA=0.05
+	METHOD=LIFE
+	WIDTH=10	PLOTS(ONLY)=SURVIVAL
+	PLOTS(ONLY)=HAZARD
+	PLOTS(ONLY)=DENSITY
+
+;
+	FREQ "# of Deaths in the interval"n;
+	STRATA Gender;
+	TIME Age_Begin;
+
+RUN;
+
+
+PROC LIFETEST DATA=WORK.import
+	ALPHA=0.05
+	PLOTS(ONLY)=SURVIVAL( CL )
+;
+	FREQ "# of Deaths in the interval"n;
+	STRATA Gender;
+	TIME Age_Begin;
+
+RUN;TITLE; 
+
+/* PART 1 EXAM ( Questions 3 - 4)*/
+
+
+%web_drop_table(cancer);
+
+
+FILENAME REFFILE '/home/u59237268/Survival_Analysis/Question3.xlsx';
+
+PROC IMPORT DATAFILE=REFFILE
+	DBMS=XLSX
+	OUT=cancer;
+	GETNAMES=YES;
+RUN;
+
+PROC CONTENTS DATA=cancer; RUN;
+
+
+%web_open_table(cancer);
+
+
+data cancer;
+set cancer;
+if Status = "Dead" then Status_num = 0;
+else if Status = "Alive" then Status_num = 1;
+Status_num = input(Status_num, best.);
+drop Status;
+rename Status_num = Status;
+run;
+
+
+
+
+PROC LIFETEST DATA=cancer
+	ALPHA=0.05
+	PLOTS(ONLY)=SURVIVAL( CL )
+;
+	STRATA Treatment;
+	TIME Time*STATUS(0);
+
+RUN;TITLE; 
+
+
+
+data mydata;
+input x y;
+datalines;
+
+0.0 1.00 
+7.0 .857
+8.0 .7143
+12 .
+14.0 .57
+22.0 .286
+;
+
+
+proc sort data=mydata;
+   by x;
+   run;
+
+
+proc expand data=mydata out=LinInterp;
+   convert y=linear / method=join;
+   id x;
+   run;
+
+symbol1 v=dot i=join c=red;
+symbol2 v=star i=none c=blue;
+title 'Linear Interpolation of Treatment A';
+proc gplot data=LinInterp;
+   plot y*x=1 linear*x=2 / overlay;
+   run; quit; 
+      
+proc print data=LinInterp noobs;
+   var x y linear;
+   run;
+   
+   
+
+data mydata;
+input x y;
+datalines;
+
+0.0 1.00 
+3.0 .8889
+11.0 .711
+12.0 .
+15.0 .4741
+;
+
+proc sort data=mydata;
+   by x;
+   run;
+
+proc expand data=mydata out=LinInterp;
+   convert y=linear / method=join;
+   id x;
+   run;
+
+symbol1 v=dot i=join c=red;
+symbol2 v=star i=none c=blue;
+
+title 'Linear Interpolation of Treatment P';
+proc gplot data=LinInterp;
+   plot y*x=1 linear*x=2 / overlay;
+   run; quit; 
+      
+proc print data=LinInterp noobs;
+   var x y linear;
+   run;
+   
+proc lifetest data=cancer method=KM plots=survival;
+  time Time*STATUS(0);
+  strata Treatment;
+run;
